@@ -76,7 +76,7 @@ class CrudGenerator extends GeneratorCommand
                     'tailwind' => 'Blade with Tailwind css',
                     'livewire' => 'Livewire with Tailwind css',
                     'api' => 'API only',
-                    'jetstream' => 'Jetstream inertia with Tailwind css',
+                    'jetstream'=> 'Jetstream inertia with Tailwind css',
                 ],
                 scroll: 5,
             ),
@@ -111,7 +111,7 @@ class CrudGenerator extends GeneratorCommand
                 "Route::get('/{$this->_getRoute()}/update/{{$replacements['{{modelNameLowerCase}}']}}', \\$this->livewireNamespace\\{$replacements['{{modelNamePluralUpperCase}}']}\Edit::class)->name('{$this->_getRoute()}.edit');",
             ],
             'api' => [
-                "Route::apiResource('" . $this->_getRoute() . "', {$this->name}Controller::class);",
+                "Route::apiResource('".$this->_getRoute()."', {$this->name}Controller::class);",
             ],
             'jetstream' => [
                 "Route::middleware(['auth:sanctum', 'verified'])->group(function () {",
@@ -119,12 +119,12 @@ class CrudGenerator extends GeneratorCommand
                 "});"
             ],
             default => [
-                "Route::resource('" . $this->_getRoute() . "', {$this->name}Controller::class);",
+                "Route::resource('".$this->_getRoute()."', {$this->name}Controller::class);",
             ]
         };
 
         foreach ($lines as $line) {
-            $this->info('<bg=blue;fg=white>' . $line . '</>');
+            $this->info('<bg=blue;fg=white>'.$line.'</>');
         }
 
         $this->info('');
@@ -140,7 +140,7 @@ class CrudGenerator extends GeneratorCommand
      */
     protected function buildController(): static
     {
-        if ($this->options['stack'] == 'jetstream') {
+        if($this->options['stack'] == 'jetstream') {
             $this->buildJetstream();
 
             return $this;
@@ -170,9 +170,7 @@ class CrudGenerator extends GeneratorCommand
         };
 
         $controllerTemplate = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $this->getStub($stubFolder . 'Controller')
+            array_keys($replace), array_values($replace), $this->getStub($stubFolder.'Controller')
         );
 
         $this->write($controllerPath, $controllerTemplate);
@@ -181,9 +179,7 @@ class CrudGenerator extends GeneratorCommand
             $resourcePath = $this->_getResourcePath($this->name);
 
             $resourceTemplate = str_replace(
-                array_keys($replace),
-                array_values($replace),
-                $this->getStub($stubFolder . 'Resource')
+                array_keys($replace), array_values($replace), $this->getStub($stubFolder.'Resource')
             );
 
             $this->write($resourcePath, $resourceTemplate);
@@ -200,127 +196,73 @@ class CrudGenerator extends GeneratorCommand
         $replace = array_merge($this->buildReplacements(), $this->modelReplacements());
 
         foreach (['Index', 'Show', 'Edit', 'Create'] as $component) {
-            $componentPath = $this->_getLivewirePath($folder . '/' . $component);
+            $componentPath = $this->_getLivewirePath($folder.'/'.$component);
 
             $componentTemplate = str_replace(
-                array_keys($replace),
-                array_values($replace),
-                $this->getStub('livewire/' . $component)
+                array_keys($replace), array_values($replace), $this->getStub('livewire/'.$component)
             );
 
             $this->write($componentPath, $componentTemplate);
         }
 
         // Form
-        $formPath = $this->_getLivewirePath('Forms/' . $this->name . 'Form');
+        $formPath = $this->_getLivewirePath('Forms/'.$this->name.'Form');
 
         $componentTemplate = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $this->getStub('livewire/Form')
+            array_keys($replace), array_values($replace), $this->getStub('livewire/Form')
         );
 
         $this->write($formPath, $componentTemplate);
     }
 
-
-    protected function buildJetstream(): void
+        protected function buildJetstream(): void
     {
         $this->info('Creating Jetstream Inertia Components ...');
 
         $folder = ucfirst(Str::plural($this->name));
+        $replace = array_merge($this->buildReplacements(), $this->modelReplacements());
 
-        // Get all filtered columns
-        $columns = $this->getFilteredColumns();
-        $tableHead = "";
-        $tableBody = "";
-        $formData = "";
-        $formFields = "";
-        $detailFields = "";
-        $columnFields = "";
-        $validationRules = "";
-        $formEditData = "";
-        $columnCount = count($columns) + 1; // +1 for actions column
-
-        // Generate the necessary fields, validations, etc.
-        foreach ($columns as $column) {
-            $title = Str::title(str_replace('_', ' ', $column));
-
-            // Table header and body
-            $tableHead .= $this->_getSpace(10) . '<th scope="col" class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">' . $title . '</th>' . "\n";
-            $tableBody .= $this->_getSpace(10) . '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ' . $this->name . '.' . $column . ' }}</td>' . "\n";
-
-            // Form data and fields
-            $formData .= $this->_getSpace(2) . $column . ': "",' . "\n";
-            $formEditData .= $this->_getSpace(4) . $column . ': this.' . $this->name . '.' . $column . ',' . "\n";
-
-            // Form field component
-            $formField = str_replace(
-                ['{{title}}', '{{column}}'],
-                [$title, $column],
-                $this->getStub('views/jetstream/form-field')
-            );
-            $formFields .= $formField . "\n";
-
-            // Detail field for show view
-            $detailField = str_replace(
-                ['{{title}}', '{{column}}', '{{modelNameLowerCase}}'],
-                [$title, $column, Str::camel($this->name)],
-                $this->getStub('views/jetstream/view-field')
-            );
-            $detailFields .= $detailField . "\n";
-
-            // Column fields for controller
-            $columnFields .= $this->_getSpace(5) . '"' . $column . '" => $' . $this->name . '->' . $column . ',' . "\n";
-
-            // Validation rules
-            $validationRules .= $this->_getSpace(3) . '"' . $column . '" => "required",' . "\n";
-        }
-
-        // Create controller replacements
-        $controllerReplacements = array_merge($this->buildReplacements(), $this->modelReplacements(), [
-            '{{columnFields}}' => rtrim($columnFields),
-            '{{validationRules}}' => rtrim($validationRules),
-        ]);
-
-        // Create Inertia component replacements
-        $viewReplacements = array_merge($this->buildReplacements(), [
-            '{{tableHeader}}' => rtrim($tableHead),
-            '{{tableBody}}' => rtrim($tableBody),
-            '{{formData}}' => rtrim($formData),
-            '{{formEditData}}' => rtrim($formEditData),
-            '{{formFields}}' => $formFields,
-            '{{detailFields}}' => $detailFields,
-            '{{columnCount}}' => $columnCount
-        ]);
-
-        // Generate components
+        // Create Inertia component directory
         $componentPath = resource_path("js/Pages/{$folder}");
         if (!$this->files->isDirectory($componentPath)) {
             $this->files->makeDirectory($componentPath, 0755, true);
         }
 
-        // Generate Vue components
+        // Generate the Inertia components
         foreach (['Index', 'Create', 'Edit', 'Show'] as $component) {
-            $content = str_replace(
-                array_keys($viewReplacements),
-                array_values($viewReplacements),
-                $this->getStub("views/jetstream/{$component}")
-            );
+            $templatePath = $this->getStub("views/jetstream/{$component}", false);
 
-            $this->write("{$componentPath}/{$component}.vue", $content);
+            if ($this->files->exists($templatePath)) {
+                $content = str_replace(
+                    array_keys($replace),
+                    array_values($replace),
+                    $this->getStub("views/jetstream/{$component}")
+                );
+
+                $this->write("{$componentPath}/{$component}.vue", $content);
+            } else {
+                $this->warn("Stub for {$component} not found. Skipping...");
+            }
         }
 
         // Create Controller
         $controllerPath = $this->_getControllerPath($this->name);
+
+        if ($this->files->exists($controllerPath) && $this->ask('Already exist Controller. Do you want overwrite (y/n)?', 'y') == 'n') {
+            return;
+        }
+
+        $this->info('Creating Controller for Jetstream...');
+
         $controllerTemplate = str_replace(
-            array_keys($controllerReplacements),
-            array_values($controllerReplacements),
+            array_keys($replace),
+            array_values($replace),
             $this->getStub('jetstream/Controller')
         );
+
         $this->write($controllerPath, $controllerTemplate);
 
-        // Create Model (using the existing buildModel method)
+        // Create Model
         $this->buildModel();
     }
 
@@ -343,9 +285,7 @@ class CrudGenerator extends GeneratorCommand
         $replace = array_merge($this->buildReplacements(), $this->modelReplacements());
 
         $modelTemplate = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $this->getStub('Model')
+            array_keys($replace), array_values($replace), $this->getStub('Model')
         );
 
         $this->write($modelPath, $modelTemplate);
@@ -356,9 +296,7 @@ class CrudGenerator extends GeneratorCommand
         $this->info('Creating Request Class ...');
 
         $requestTemplate = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $this->getStub('Request')
+            array_keys($replace), array_values($replace), $this->getStub('Request')
         );
 
         $this->write($requestPath, $requestTemplate);
@@ -390,7 +328,7 @@ class CrudGenerator extends GeneratorCommand
 
             $tableHead .= $this->getHead($title);
             $tableBody .= $this->getBody($column);
-            if ($this->options['stack'] != 'jetstream') {
+            if($this->options['stack'] != 'jetstream'){
                 $viewRows .= $this->getField($title, $column, 'view-field');
             }
             $form .= $this->getField($title, $column);
@@ -416,9 +354,7 @@ class CrudGenerator extends GeneratorCommand
             };
 
             $viewTemplate = str_replace(
-                array_keys($replace),
-                array_values($replace),
-                $this->getStub($path)
+                array_keys($replace), array_values($replace), $this->getStub($path)
             );
 
             $this->write($this->_getViewPath($view), $viewTemplate);
