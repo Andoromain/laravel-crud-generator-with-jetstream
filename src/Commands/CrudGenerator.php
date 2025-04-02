@@ -262,8 +262,6 @@ class CrudGenerator extends GeneratorCommand
 
         $this->write($controllerPath, $controllerTemplate);
 
-        // Create Model
-        $this->buildModel();
     }
 
     /**
@@ -328,9 +326,7 @@ class CrudGenerator extends GeneratorCommand
 
             $tableHead .= $this->getHead($title);
             $tableBody .= $this->getBody($column);
-            if($this->options['stack'] != 'jetstream'){
-                $viewRows .= $this->getField($title, $column, 'view-field');
-            }
+            $viewRows .= $this->getField($title, $column, 'view-field');
             $form .= $this->getField($title, $column);
         }
 
@@ -344,6 +340,9 @@ class CrudGenerator extends GeneratorCommand
         $this->buildLayout();
 
         if ($this->options['stack'] === 'jetstream') {
+
+            $this->info('Creating Jetstream Inertia Layout ...');
+
             return $this;
         }
 
