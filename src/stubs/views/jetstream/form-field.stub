@@ -1,1 +1,12 @@
 
+<div class="mb-4">
+    <InputLabel for="{{column}}" value="{{title}}" />
+    <TextInput
+        id="{{column}}"
+        v-model="form.{{column}}"
+        type="text"
+        class="mt-1 block w-full"
+        :disabled="form.processing"
+    />
+    <InputError :message="form.errors.{{column}}" class="mt-2" />
+</div>

@@ -1,5 +1,26 @@
+<script setup>
+import { Head, useForm } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
+
+const form = useForm({
+    {{formData}}
+});
+
+function submit() {
+    form.post(route('{{modelRoute}}.store'));
+}
+</script>
+
 <template>
-    <app-layout>
+    <AppLayout>
+        <Head title="Create {{modelTitle}}" />
+
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Create {{modelTitle}}
@@ -11,47 +32,21 @@
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit">
-                            <!-- Form fields will go here -->
+                            <!-- Form fields -->
                             {{formFields}}
 
-                            <div class="flex items-center justify-end mt-4">
-                                <inertia-link :href="route('{{modelRoute}}.index')" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black font-bold rounded mr-2">
+                            <div class="flex items-center justify-end mt-4 gap-x-4">
+                                <Link :href="route('{{modelRoute}}.index')" class="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-black font-bold rounded transition">
                                     Cancel
-                                </inertia-link>
-                                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded">
+                                </Link>
+                                <PrimaryButton :disabled="form.processing">
                                     Create
-                                </button>
+                                </PrimaryButton>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-    </app-layout>
+    </AppLayout>
 </template>
-
-<script>
-import { defineComponent } from 'vue'
-import AppLayout from '@/Layouts/AppLayout.vue'
-
-export default defineComponent({
-    components: {
-        AppLayout
-    },
-    data() {
-        return {
-            form: this.$inertia.form({
-                // Form fields will be defined here
-                {{formData}}
-            })
-        }
-    },
-    methods: {
-        submit() {
-            this.form.post(route('{{modelRoute}}.store'), {
-                onSuccess: () => this.form.reset(),
-            })
-        }
-    }
-})
-</script>

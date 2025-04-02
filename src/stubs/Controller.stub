@@ -3,82 +3,115 @@
 namespace {{controllerNamespace}};
 
 use {{modelNamespace}}\{{modelName}};
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use {{requestNamespace}}\{{modelName}}Request;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use Inertia\Inertia;
 
 class {{modelName}}Controller extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
+     * @return \Inertia\Response
      */
-    public function index(Request $request): View
+    public function index(Request $request)
     {
-        ${{modelNamePluralLowerCase}} = {{modelName}}::paginate();
-
-        return view('{{modelView}}.index', compact('{{modelNamePluralLowerCase}}'))
-            ->with('i', ($request->input('page', 1) - 1) * ${{modelNamePluralLowerCase}}->perPage());
+        return Inertia::render('{{modelNamePluralUpperCase}}/Index', [
+            'filters' => $request->only('search'),
+            '{{modelNamePluralLowerCase}}' => {{modelName}}::query()
+                ->when($request->filled('search'), function($query) use ($request) {
+                    $query->where('name', 'like', "%{$request->search}%");
+                })
+                ->paginate()
+                ->withQueryString()
+                ->through(fn (${{modelNameLowerCase}}) => [
+                    'id' => ${{modelNameLowerCase}}->id,
+                    {{columnFields}}
+                ]),
+        ]);
     }
 
     /**
      * Show the form for creating a new resource.
+     *
+     * @return \Inertia\Response
      */
-    public function create(): View
+    public function create()
     {
-        ${{modelNameLowerCase}} = new {{modelName}}();
-
-        return view('{{modelView}}.create', compact('{{modelNameLowerCase}}'));
+        return Inertia::render('{{modelNamePluralUpperCase}}/Create');
     }
 
     /**
      * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store({{modelName}}Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        {{modelName}}::create($request->validated());
+        $validated = $request->validate([
+            {{validationRules}}
+        ]);
 
-        return Redirect::route('{{modelRoute}}.index')
-            ->with('success', '{{modelName}} created successfully.');
+        {{modelName}}::create($validated);
+
+        return Redirect::route('{{modelRoute}}.index')->with('success', '{{modelTitle}} created successfully.');
     }
 
     /**
      * Display the specified resource.
+     *
+     * @param  \{{modelNamespace}}\{{modelName}}  ${{modelNameLowerCase}}
+     * @return \Inertia\Response
      */
-    public function show($id): View
+    public function show({{modelName}} ${{modelNameLowerCase}})
     {
-        ${{modelNameLowerCase}} = {{modelName}}::find($id);
-
-        return view('{{modelView}}.show', compact('{{modelNameLowerCase}}'));
+        return Inertia::render('{{modelNamePluralUpperCase}}/Show', [
+            '{{modelNameLowerCase}}' => ${{modelNameLowerCase}}
+        ]);
     }
 
     /**
      * Show the form for editing the specified resource.
+     *
+     * @param  \{{modelNamespace}}\{{modelName}}  ${{modelNameLowerCase}}
+     * @return \Inertia\Response
      */
-    public function edit($id): View
+    public function edit({{modelName}} ${{modelNameLowerCase}})
     {
-        ${{modelNameLowerCase}} = {{modelName}}::find($id);
-
-        return view('{{modelView}}.edit', compact('{{modelNameLowerCase}}'));
+        return Inertia::render('{{modelNamePluralUpperCase}}/Edit', [
+            '{{modelNameLowerCase}}' => ${{modelNameLowerCase}}
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \{{modelNamespace}}\{{modelName}}  ${{modelNameLowerCase}}
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function update({{modelName}}Request $request, {{modelName}} ${{modelNameLowerCase}}): RedirectResponse
+    public function update(Request $request, {{modelName}} ${{modelNameLowerCase}})
     {
-        ${{modelNameLowerCase}}->update($request->validated());
+        $validated = $request->validate([
+            {{validationRules}}
+        ]);
 
-        return Redirect::route('{{modelRoute}}.index')
-            ->with('success', '{{modelName}} updated successfully');
+        ${{modelNameLowerCase}}->update($validated);
+
+        return Redirect::route('{{modelRoute}}.index')->with('success', '{{modelTitle}} updated successfully.');
     }
 
-    public function destroy($id): RedirectResponse
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \{{modelNamespace}}\{{modelName}}  ${{modelNameLowerCase}}
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy({{modelName}} ${{modelNameLowerCase}})
     {
-        {{modelName}}::find($id)->delete();
+        ${{modelNameLowerCase}}->delete();
 
-        return Redirect::route('{{modelRoute}}.index')
-            ->with('success', '{{modelName}} deleted successfully');
+        return Redirect::route('{{modelRoute}}.index')->with('success', '{{modelTitle}} deleted successfully.');
     }
 }
