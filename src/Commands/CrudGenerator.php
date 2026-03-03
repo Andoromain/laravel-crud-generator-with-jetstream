@@ -529,10 +529,12 @@ class CrudGenerator extends GeneratorCommand
         }
 
         foreach (['index', 'create', 'edit', 'form', 'show'] as $view) {
-            $path = match ($this->options['stack']) {
-                'livewire' => $this->isLaravel12() ? "views/{$this->options['stack']}/12/$view" : "views/{$this->options['stack']}/default/$view",
-                default => "views/{$this->options['stack']}/$view"
-            };
+            $path = $this->isCustomStubFolder()
+                ? "views/{$this->options['stack']}/$view"
+                : match ($this->options['stack']) {
+                    'livewire' => $this->isLaravel12() ? "views/{$this->options['stack']}/12/$view" : "views/{$this->options['stack']}/default/$view",
+                    default => "views/{$this->options['stack']}/$view"
+                };
 
             $viewTemplate = str_replace(
                 array_keys($replace), array_values($replace), $this->getStub($path)
